@@ -57,9 +57,6 @@ with st.sidebar:
     df = load_stock_data(stock_ticker, period, interval)
 
     if df is not None and not df.empty:
-        st.header('Stock Data Preview')
-        st.dataframe(df.head())
-        
         st.header('2. Set Parameters')
         parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
         with st.expander('What is data split ratio?'):
@@ -162,15 +159,13 @@ if df is not None and not df.empty:
     st.success("Model training complete!")
 
     # Display data info
-    st.header('Input data', divider='rainbow')
+    st.header('Stock data from Yahoo Finance', divider='rainbow')
     col1, col2, col3, col4 = st.columns(4)
     col1.metric(label="No. of samples", value=X.shape[0])
     col2.metric(label="No. of X variables", value=X.shape[1])
     col3.metric(label="No. of Training samples", value=X_train.shape[0])
     col4.metric(label="No. of Test samples", value=X_test.shape[0])
 
-    with st.expander('Initial dataset', expanded=True):
-        st.dataframe(df, height=210, use_container_width=True)
     with st.expander('Train split', expanded=False):
         train_col1, train_col2 = st.columns((3, 1))
         with train_col1:
@@ -219,36 +214,43 @@ if df is not None and not df.empty:
     importances = rf.feature_importances_
     feature_names = list(X.columns)
     forest_importances = pd.Series(importances, index=feature_names)
-    df_importance = forest_importances.reset_index().rename(columns={'index': 'feature', 0: 'value'})
+    df_importance = forest_importances.reset_index().rename(columns={'index': 'feature', 0: 'importance'})
 
     bars = alt.Chart(df_importance).mark_bar(size=40).encode(
-        x='value:Q',
+        x='importance:Q',
         y=alt.Y('feature:N', sort='-x')
     ).properties(height=250)
 
     col1, col2 = st.columns((2, 3))
     with col1:
         st.header('Model performance', divider='rainbow')
-        st.dataframe(rf_results.T.reset_index().rename(columns={'index': 'Parameter', 0: 'Value'}))
+        st.dataframe(rf_results.reset_index(drop=True))
+        with st.expander('Explanation of Metrics'):
+            st.markdown("- **Training Squared Error**: Mean squared error on the training set.")
+            st.markdown("- **Training R2**: R-squared score on the training set.")
+            st.markdown("- **Test Squared Error**: Mean squared error on the test set.")
+            st.markdown("- **Test R2**: R-squared score on the test set.")
     with col2:
         st.header('Feature importance', divider='rainbow')
         st.altair_chart(bars, theme='streamlit', use_container_width=True)
 
     # Prediction results
     st.header('Prediction results', divider='rainbow')
-    df_train = pd.DataFrame({'actual': y_train, 'predicted': y_train_pred, 'class': 'train'}).reset_index(drop=True)
-    df_test = pd.DataFrame({'actual': y_test, 'predicted': y_test_pred, 'class': 'test'}).reset_index(drop=True)
-    df_prediction = pd.concat([df_train, df_test], axis=0)
+    df_train = pd.DataFrame({'Index': y_train.index, 'actual': y_train.values, 'predicted': y_train_pred, 'class': 'train'}).reset_index(drop=True)
+    df_test = pd.DataFrame({'Index': y_test.index, 'actual': y_test.values, 'predicted': y_test_pred, 'class': 'test'}).reset_index(drop=True)
+    df_prediction = pd.concat([df_train, df_test], axis=0).reset_index(drop=True)
 
     col1, col2 = st.columns((2, 3))
     with col1:
         st.dataframe(df_prediction, height=320, use_container_width=True)
+
     with col2:
         scatter = alt.Chart(df_prediction).mark_circle(size=60).encode(
-            x='actual',
-            y='predicted',
-            color='class'
-        )
+            x='actual:Q',
+            y='predicted:Q',
+            color='class:N'
+        ).properties(width=600, height=400)
+
         st.altair_chart(scatter, theme='streamlit', use_container_width=True)
 
 # Ask for valid stock ticker if none is provided
