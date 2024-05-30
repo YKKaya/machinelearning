@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import yfinance as yf
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -39,11 +38,14 @@ with st.sidebar:
     st.markdown('**1. Select stock ticker**')
     stock_ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT)", "AAPL")
 
+    st.markdown("**2. Select time period and interval**")
+    period = st.selectbox("Select time period:", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"])
+    interval = st.selectbox("Select time interval:", ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"])
+
     @st.cache_data
-    def load_stock_data(ticker):
-        # Use try-except block to handle potential errors
+    def load_stock_data(ticker, period, interval):
         try:
-            data = yf.download(ticker, progress=False)
+            data = yf.download(ticker, period=period, interval=interval, progress=False)
             if data.empty:
                 raise ValueError("No data found for ticker")
             return data
@@ -51,7 +53,7 @@ with st.sidebar:
             st.error(f"Error fetching data for ticker {ticker}: {e}")
             return None
 
-    df = load_stock_data(stock_ticker)
+    df = load_stock_data(stock_ticker, period, interval)
 
     if df is not None and not df.empty:
         st.header('Stock Data Preview')
