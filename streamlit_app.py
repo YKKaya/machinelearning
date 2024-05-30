@@ -41,11 +41,15 @@ with st.sidebar:
 
     @st.cache_data
     def load_stock_data(ticker):
-        return yf.download(ticker)
+        return yf.download(ticker, progress=False)
 
-    df = load_stock_data(stock_ticker)
+    try:
+        df = load_stock_data(stock_ticker)
+    except Exception as e:
+        st.error(f"Error fetching data for ticker {stock_ticker}: {e}")
+        df = None
 
-    if df is not None:
+    if df is not None and not df.empty:
         st.header('2. Set Parameters')
         parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
         with st.expander('What is data split ratio?'):
@@ -237,6 +241,6 @@ if df is not None and not df.empty:
         )
         st.altair_chart(scatter, theme='streamlit', use_container_width=True)
 
-# Ask for CSV upload if none is detected
+# Ask for valid stock ticker if none is provided
 else:
     st.warning('👈 Enter a valid stock ticker to get started!')
