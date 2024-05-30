@@ -1,8 +1,5 @@
 # 📈  Stock Performance Prediction
 
-
-Description of the app ...
-
 This Streamlit application allows users to build a machine learning model for predicting stock performance. The app fetches stock data from Yahoo Finance, processes the data, and uses a Random Forest Regressor to predict stock prices.
 
 ## Features
