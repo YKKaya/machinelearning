@@ -43,7 +43,7 @@ with st.sidebar:
     def load_stock_data(ticker):
         # Use try-except block to handle potential errors
         try:
-            data = yf.download(ticker,  period="12m", interval="1h")
+            data = yf.download(ticker, progress=False)
             if data.empty:
                 raise ValueError("No data found for ticker")
             return data
