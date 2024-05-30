@@ -1,9 +1,9 @@
-# 📦 Streamlit App Starter Kit 
-```
-⬆️ (Replace above with your app's name)
-```
+# 📦 Machine Learning Application
+
 
 Description of the app ...
+
+This is a modified version of a template from Streamlit, altered to fit financial data usage. 
 
 ## Demo App
 
