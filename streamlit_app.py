@@ -37,7 +37,7 @@ with st.sidebar:
     st.header('1. Input Data')
 
     st.markdown('**1. Select stock ticker**')
-    stock_ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT)", "AAPL")
+    stock_ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT)", "NVDA")
 
     st.markdown("**2. Select time period and interval**")
     period = st.selectbox("Select time period:", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"], index=5)
