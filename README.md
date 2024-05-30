@@ -15,7 +15,7 @@ This Streamlit application allows users to build a machine learning model for pr
 - Train a Random Forest Regressor.
 - Display performance metrics of the model.
 - Download the generated model and data.
-- 
+  
 ## Libraries Used
 
 - **Pandas** for data wrangling
