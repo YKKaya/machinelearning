@@ -12,7 +12,6 @@ import zipfile
 st.set_page_config(page_title='ML Model Building', page_icon='🤖')
 st.title('🤖 ML Model Building')
 
-# About the app
 with st.expander('About this app'):
     st.markdown('**What can this app do?**')
     st.info('This app allows users to build a machine learning (ML) model in an end-to-end workflow. This includes data upload, data pre-processing, ML model building, and post-model analysis.')
@@ -72,40 +71,38 @@ with st.sidebar:
         st.write("Data split ratio determines the proportion of data that will be used for training the model versus the proportion used for testing the model. Typically, a higher percentage is allocated for training.")
 
     st.subheader('2.1. Learning Parameters')
-    with st.expander('See parameters'):
-        parameter_n_estimators = st.slider('Number of estimators (n_estimators)', 0, 1000, 100, 100)
-        with st.expander('What is n_estimators?'):
-            st.write("The number of trees in the forest. Increasing this number can improve model performance but also increases computation time.")
+    parameter_n_estimators = st.slider('Number of estimators (n_estimators)', 0, 1000, 100, 100)
+    with st.expander('What is n_estimators?'):
+        st.write("The number of trees in the forest. Increasing this number can improve model performance but also increases computation time.")
 
-        parameter_max_features = st.select_slider('Max features (max_features)', options=['all', 'sqrt', 'log2'])
-        with st.expander('What is max_features?'):
-            st.write("The number of features to consider when looking for the best split. 'All' uses all features, 'sqrt' uses the square root of the number of features, and 'log2' uses the logarithm base 2 of the number of features.")
+    parameter_max_features = st.select_slider('Max features (max_features)', options=['all', 'sqrt', 'log2'])
+    with st.expander('What is max_features?'):
+        st.write("The number of features to consider when looking for the best split. 'All' uses all features, 'sqrt' uses the square root of the number of features, and 'log2' uses the logarithm base 2 of the number of features.")
 
-        parameter_min_samples_split = st.slider('Minimum number of samples required to split an internal node (min_samples_split)', 2, 10, 2, 1)
-        with st.expander('What is min_samples_split?'):
-            st.write("The minimum number of samples required to split an internal node. A higher value can make the model more conservative.")
+    parameter_min_samples_split = st.slider('Minimum number of samples required to split an internal node (min_samples_split)', 2, 10, 2, 1)
+    with st.expander('What is min_samples_split?'):
+        st.write("The minimum number of samples required to split an internal node. A higher value can make the model more conservative.")
 
-        parameter_min_samples_leaf = st.slider('Minimum number of samples required to be at a leaf node (min_samples_leaf)', 1, 10, 2, 1)
-        with st.expander('What is min_samples_leaf?'):
-            st.write("The minimum number of samples required to be at a leaf node. This value can affect the model's ability to generalize.")
+    parameter_min_samples_leaf = st.slider('Minimum number of samples required to be at a leaf node (min_samples_leaf)', 1, 10, 2, 1)
+    with st.expander('What is min_samples_leaf?'):
+        st.write("The minimum number of samples required to be at a leaf node. This value can affect the model's ability to generalize.")
 
     st.subheader('2.2. General Parameters')
-    with st.expander('See parameters', expanded=False):
-        parameter_random_state = st.slider('Seed number (random_state)', 0, 1000, 42, 1)
-        with st.expander('What is random_state?'):
-            st.write("The seed used by the random number generator. This ensures reproducibility of the model training.")
+    parameter_random_state = st.slider('Seed number (random_state)', 0, 1000, 42, 1)
+    with st.expander('What is random_state?'):
+        st.write("The seed used by the random number generator. This ensures reproducibility of the model training.")
 
-        parameter_criterion = st.select_slider('Performance measure (criterion)', options=['squared_error', 'absolute_error', 'friedman_mse'])
-        with st.expander('What is criterion?'):
-            st.write("The function to measure the quality of a split. 'squared_error' is the default for regression tasks.")
+    parameter_criterion = st.select_slider('Performance measure (criterion)', options=['squared_error', 'absolute_error', 'friedman_mse'])
+    with st.expander('What is criterion?'):
+        st.write("The function to measure the quality of a split. 'squared_error' is the default for regression tasks.")
 
-        parameter_bootstrap = st.select_slider('Bootstrap samples when building trees (bootstrap)', options=[True, False])
-        with st.expander('What is bootstrap?'):
-            st.write("Whether bootstrap samples are used when building trees. If False, the whole dataset is used to build each tree.")
+    parameter_bootstrap = st.select_slider('Bootstrap samples when building trees (bootstrap)', options=[True, False])
+    with st.expander('What is bootstrap?'):
+        st.write("Whether bootstrap samples are used when building trees. If False, the whole dataset is used to build each tree.")
 
-        parameter_oob_score = st.select_slider('Use out-of-bag samples to estimate the R^2 on unseen data (oob_score)', options=[False, True])
-        with st.expander('What is oob_score?'):
-            st.write("Whether to use out-of-bag samples to estimate the R^2 on unseen data. Out-of-bag samples are the samples that are not included in the bootstrap sample for a tree.")
+    parameter_oob_score = st.select_slider('Use out-of-bag samples to estimate the R^2 on unseen data (oob_score)', options=[False, True])
+    with st.expander('What is oob_score?'):
+        st.write("Whether to use out-of-bag samples to estimate the R^2 on unseen data. Out-of-bag samples are the samples that are not included in the bootstrap sample for a tree.")
 
     sleep_time = st.slider('Sleep time', 0, 3, 0)
     with st.expander('What is sleep time?'):
