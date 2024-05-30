@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import yfinance as yf
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
@@ -9,22 +10,23 @@ import time
 import zipfile
 
 # Page title
-st.set_page_config(page_title='ML Model Building', page_icon='🤖')
-st.title('🤖 ML Model Building')
+st.set_page_config(page_title='Stock Performance Prediction', page_icon='📈')
+st.title('📈 Stock Performance Prediction')
 
 with st.expander('About this app'):
     st.markdown('**What can this app do?**')
-    st.info('This app allows users to build a machine learning (ML) model in an end-to-end workflow. This includes data upload, data pre-processing, ML model building, and post-model analysis.')
+    st.info('This app allows users to build a machine learning (ML) model for predicting stock performance. This includes data fetching from Yahoo Finance, data pre-processing, ML model building, and post-model analysis.')
 
     st.markdown('**How to use the app?**')
-    st.warning('To engage with the app, go to the sidebar and 1. Select a dataset and 2. Adjust the model parameters using the various slider widgets. This will initiate the ML model building process, display the model results, and allow users to download the generated models and accompanying data.')
+    st.warning('To engage with the app, go to the sidebar and 1. Select a stock ticker and 2. Adjust the model parameters using the various slider widgets. This will initiate the ML model building process, display the model results, and allow users to download the generated models and accompanying data.')
 
     st.markdown('**Under the hood**')
     st.markdown('Data sets:')
-    st.code('- Drug solubility data set', language='markdown')
+    st.code('- Stock data from Yahoo Finance', language='markdown')
 
     st.markdown('Libraries used:')
     st.code('''- Pandas for data wrangling
+- yfinance for fetching stock data
 - Scikit-learn for building a machine learning model
 - Altair for chart creation
 - Streamlit for user interface
@@ -34,90 +36,70 @@ with st.expander('About this app'):
 with st.sidebar:
     st.header('1. Input Data')
 
-    st.markdown('**1. Use custom data**')
-    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
-    
-    @st.cache_data
-    def load_example_data():
-        return pd.read_csv('https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv')
+    st.markdown('**1. Select stock ticker**')
+    stock_ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT)", "AAPL")
 
     @st.cache_data
-    def convert_df(input_df):
-        return input_df.to_csv(index=False).encode('utf-8')
+    def load_stock_data(ticker):
+        return yf.download(ticker)
 
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file, index_col=False)
-    else:
-        st.markdown('**1.2. Use example data**')
-        example_data = st.toggle('Load example data')
-        if example_data:
-            df = load_example_data()
-        else:
-            df = None
+    df = load_stock_data(stock_ticker)
 
     if df is not None:
-        example_csv = load_example_data()
-        csv = convert_df(example_csv)
-        st.download_button(
-            label="Download example CSV",
-            data=csv,
-            file_name='delaney_solubility_with_descriptors.csv',
-            mime='text/csv',
-        )
+        st.header('2. Set Parameters')
+        parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
+        with st.expander('What is data split ratio?'):
+            st.write("Data split ratio determines the proportion of data that will be used for training the model versus the proportion used for testing the model. Typically, a higher percentage is allocated for training.")
 
-    st.header('2. Set Parameters')
-    parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
-    with st.expander('What is data split ratio?'):
-        st.write("Data split ratio determines the proportion of data that will be used for training the model versus the proportion used for testing the model. Typically, a higher percentage is allocated for training.")
+        st.subheader('2.1. Learning Parameters')
+        parameter_n_estimators = st.slider('Number of estimators (n_estimators)', 0, 1000, 100, 100)
+        with st.expander('What is n_estimators?'):
+            st.write("The number of trees in the forest. Increasing this number can improve model performance but also increases computation time.")
 
-    st.subheader('2.1. Learning Parameters')
-    parameter_n_estimators = st.slider('Number of estimators (n_estimators)', 0, 1000, 100, 100)
-    with st.expander('What is n_estimators?'):
-        st.write("The number of trees in the forest. Increasing this number can improve model performance but also increases computation time.")
+        parameter_max_features = st.select_slider('Max features (max_features)', options=['all', 'sqrt', 'log2'])
+        with st.expander('What is max_features?'):
+            st.write("The number of features to consider when looking for the best split. 'All' uses all features, 'sqrt' uses the square root of the number of features, and 'log2' uses the logarithm base 2 of the number of features.")
 
-    parameter_max_features = st.select_slider('Max features (max_features)', options=['all', 'sqrt', 'log2'])
-    with st.expander('What is max_features?'):
-        st.write("The number of features to consider when looking for the best split. 'All' uses all features, 'sqrt' uses the square root of the number of features, and 'log2' uses the logarithm base 2 of the number of features.")
+        parameter_min_samples_split = st.slider('Minimum number of samples required to split an internal node (min_samples_split)', 2, 10, 2, 1)
+        with st.expander('What is min_samples_split?'):
+            st.write("The minimum number of samples required to split an internal node. A higher value can make the model more conservative.")
 
-    parameter_min_samples_split = st.slider('Minimum number of samples required to split an internal node (min_samples_split)', 2, 10, 2, 1)
-    with st.expander('What is min_samples_split?'):
-        st.write("The minimum number of samples required to split an internal node. A higher value can make the model more conservative.")
+        parameter_min_samples_leaf = st.slider('Minimum number of samples required to be at a leaf node (min_samples_leaf)', 1, 10, 2, 1)
+        with st.expander('What is min_samples_leaf?'):
+            st.write("The minimum number of samples required to be at a leaf node. This value can affect the model's ability to generalize.")
 
-    parameter_min_samples_leaf = st.slider('Minimum number of samples required to be at a leaf node (min_samples_leaf)', 1, 10, 2, 1)
-    with st.expander('What is min_samples_leaf?'):
-        st.write("The minimum number of samples required to be at a leaf node. This value can affect the model's ability to generalize.")
+        st.subheader('2.2. General Parameters')
+        parameter_random_state = st.slider('Seed number (random_state)', 0, 1000, 42, 1)
+        with st.expander('What is random_state?'):
+            st.write("The seed used by the random number generator. This ensures reproducibility of the model training.")
 
-    st.subheader('2.2. General Parameters')
-    parameter_random_state = st.slider('Seed number (random_state)', 0, 1000, 42, 1)
-    with st.expander('What is random_state?'):
-        st.write("The seed used by the random number generator. This ensures reproducibility of the model training.")
+        parameter_criterion = st.select_slider('Performance measure (criterion)', options=['squared_error', 'absolute_error', 'friedman_mse'])
+        with st.expander('What is criterion?'):
+            st.write("The function to measure the quality of a split. 'squared_error' is the default for regression tasks.")
 
-    parameter_criterion = st.select_slider('Performance measure (criterion)', options=['squared_error', 'absolute_error', 'friedman_mse'])
-    with st.expander('What is criterion?'):
-        st.write("The function to measure the quality of a split. 'squared_error' is the default for regression tasks.")
+        parameter_bootstrap = st.select_slider('Bootstrap samples when building trees (bootstrap)', options=[True, False])
+        with st.expander('What is bootstrap?'):
+            st.write("Whether bootstrap samples are used when building trees. If False, the whole dataset is used to build each tree.")
 
-    parameter_bootstrap = st.select_slider('Bootstrap samples when building trees (bootstrap)', options=[True, False])
-    with st.expander('What is bootstrap?'):
-        st.write("Whether bootstrap samples are used when building trees. If False, the whole dataset is used to build each tree.")
+        parameter_oob_score = st.select_slider('Use out-of-bag samples to estimate the R^2 on unseen data (oob_score)', options=[False, True])
+        with st.expander('What is oob_score?'):
+            st.write("Whether to use out-of-bag samples to estimate the R^2 on unseen data. Out-of-bag samples are the samples that are not included in the bootstrap sample for a tree.")
 
-    parameter_oob_score = st.select_slider('Use out-of-bag samples to estimate the R^2 on unseen data (oob_score)', options=[False, True])
-    with st.expander('What is oob_score?'):
-        st.write("Whether to use out-of-bag samples to estimate the R^2 on unseen data. Out-of-bag samples are the samples that are not included in the bootstrap sample for a tree.")
-
-    sleep_time = st.slider('Sleep time', 0, 3, 0)
-    with st.expander('What is sleep time?'):
-        st.write("Sleep time is used to simulate processing time, giving users visual feedback on long operations. It can be set to zero for faster execution.")
+        sleep_time = st.slider('Sleep time', 0, 3, 0)
+        with st.expander('What is sleep time?'):
+            st.write("Sleep time is used to simulate processing time, giving users visual feedback on long operations. It can be set to zero for faster execution.")
 
 # Initiate the model building process
-if df is not None:
+if df is not None and not df.empty:
     with st.spinner("Running..."):
         st.write("Loading data ...")
         time.sleep(sleep_time)
 
         st.write("Preparing data ...")
         time.sleep(sleep_time)
-        X = df.iloc[:, :-1]
-        y = df.iloc[:, -1]
+        df = df.dropna()  # Dropping rows with missing values
+        X = df[['Open', 'High', 'Low', 'Close', 'Volume']]
+        y = df['Adj Close']
 
         st.write("Splitting data ...")
         time.sleep(sleep_time)
@@ -257,4 +239,4 @@ if df is not None:
 
 # Ask for CSV upload if none is detected
 else:
-    st.warning('👈 Upload a CSV file or click *"Load example data"* to get started!')
+    st.warning('👈 Enter a valid stock ticker to get started!')
