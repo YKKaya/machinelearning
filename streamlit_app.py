@@ -8,11 +8,12 @@ import altair as alt
 import time
 import zipfile
 
-# Page title
-st.set_page_config(page_title='ML Model Building', page_icon='🤖')
+# Page configuration
+st.set_page_config(page_title='ML Model Building', page_icon='🤖', layout='wide')
 st.title('🤖 ML Model Building')
 
-with st.expander('About this app'):
+# Sidebar - About section
+with st.sidebar.expander('About this app'):
     st.markdown('**What can this app do?**')
     st.info('This app allows users to build a machine learning (ML) model in an end-to-end workflow. This includes data upload, data pre-processing, ML model building, and post-model analysis.')
 
@@ -30,64 +31,63 @@ with st.expander('About this app'):
 - Streamlit for user interface
     ''', language='markdown')
 
-# Sidebar for accepting input parameters
-with st.sidebar:
-    # Load data
-    st.header('1.1. Input data')
+# Sidebar - Data input
+st.sidebar.header('1. Input Data')
+uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"])
 
-    st.markdown('**1. Use custom data**')
-    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
-    
-    @st.cache_data
-    def load_example_data():
-        return pd.read_csv('https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv')
+@st.cache_data
+def load_example_data():
+    return pd.read_csv('https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv')
 
-    @st.cache_data
-    def convert_df(input_df):
-        return input_df.to_csv(index=False).encode('utf-8')
+@st.cache_data
+def convert_df(input_df):
+    return input_df.to_csv(index=False).encode('utf-8')
 
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file, index_col=False)
+if uploaded_file:
+    df = pd.read_csv(uploaded_file, index_col=False)
+else:
+    example_data = st.sidebar.checkbox('Load example data')
+    if example_data:
+        df = load_example_data()
     else:
-        st.markdown('**1.2. Use example data**')
-        example_data = st.toggle('Load example data')
-        if example_data:
-            df = load_example_data()
-        else:
-            df = None
+        df = None
 
-    if df is not None:
-        example_csv = load_example_data()
-        csv = convert_df(example_csv)
-        st.download_button(
-            label="Download example CSV",
-            data=csv,
-            file_name='delaney_solubility_with_descriptors.csv',
-            mime='text/csv',
-        )
+if df is not None:
+    example_csv = load_example_data()
+    csv = convert_df(example_csv)
+    st.sidebar.download_button(
+        label="Download example CSV",
+        data=csv,
+        file_name='delaney_solubility_with_descriptors.csv',
+        mime='text/csv',
+    )
 
-    st.header('2. Set Parameters')
-    parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
+    # Sidebar - Model parameters
+    st.sidebar.header('2. Set Parameters')
+    parameter_split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
 
-    st.subheader('2.1. Learning Parameters')
-    with st.expander('See parameters'):
+    st.sidebar.subheader('2.1. Learning Parameters')
+    with st.sidebar.expander('See parameters'):
         parameter_n_estimators = st.slider('Number of estimators (n_estimators)', 0, 1000, 100, 100)
         parameter_max_features = st.select_slider('Max features (max_features)', options=['all', 'sqrt', 'log2'])
         parameter_min_samples_split = st.slider('Minimum number of samples required to split an internal node (min_samples_split)', 2, 10, 2, 1)
         parameter_min_samples_leaf = st.slider('Minimum number of samples required to be at a leaf node (min_samples_leaf)', 1, 10, 2, 1)
 
-    st.subheader('2.2. General Parameters')
-    with st.expander('See parameters', expanded=False):
+    st.sidebar.subheader('2.2. General Parameters')
+    with st.sidebar.expander('See parameters'):
         parameter_random_state = st.slider('Seed number (random_state)', 0, 1000, 42, 1)
         parameter_criterion = st.select_slider('Performance measure (criterion)', options=['squared_error', 'absolute_error', 'friedman_mse'])
         parameter_bootstrap = st.select_slider('Bootstrap samples when building trees (bootstrap)', options=[True, False])
-        parameter_oob_score = st.select_slider('Whether to use out-of-bag samples to estimate the R^2 on unseen data (oob_score)', options=[False, True])
+        parameter_oob_score = st.select_slider('Use out-of-bag samples to estimate the R^2 on unseen data (oob_score)', options=[False, True])
 
-    sleep_time = st.slider('Sleep time', 0, 3, 0)
+    sleep_time = st.sidebar.slider('Sleep time', 0, 3, 0)
 
-# Initiate the model building process
-if df is not None:
+    # Main content - Model building process
     with st.spinner("Running..."):
+        st.subheader("Model Building Process")
+
+        # Loading and preparing data
+        st.markdown("### Step 1: Loading and Preparing Data")
         st.write("Loading data ...")
         time.sleep(sleep_time)
 
@@ -96,10 +96,14 @@ if df is not None:
         X = df.iloc[:, :-1]
         y = df.iloc[:, -1]
 
+        # Splitting data
+        st.markdown("### Step 2: Splitting Data")
         st.write("Splitting data ...")
         time.sleep(sleep_time)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(100 - parameter_split_size) / 100, random_state=parameter_random_state)
 
+        # Training model
+        st.markdown("### Step 3: Training Model")
         st.write("Model training ...")
         time.sleep(sleep_time)
 
@@ -116,11 +120,15 @@ if df is not None:
             oob_score=parameter_oob_score)
         rf.fit(X_train, y_train)
 
+        # Making predictions
+        st.markdown("### Step 4: Making Predictions")
         st.write("Applying model to make predictions ...")
         time.sleep(sleep_time)
         y_train_pred = rf.predict(X_train)
         y_test_pred = rf.predict(X_test)
 
+        # Evaluating performance
+        st.markdown("### Step 5: Evaluating Performance")
         st.write("Evaluating performance metrics ...")
         time.sleep(sleep_time)
         train_mse = mean_squared_error(y_train, y_train_pred)
@@ -128,48 +136,44 @@ if df is not None:
         test_mse = mean_squared_error(y_test, y_test_pred)
         test_r2 = r2_score(y_test, y_test_pred)
 
-        st.write("Displaying performance metrics ...")
-        time.sleep(sleep_time)
+        # Displaying results
+        st.markdown("### Step 6: Displaying Results")
         parameter_criterion_string = ' '.join([x.capitalize() for x in parameter_criterion.split('_')])
-
         rf_results = pd.DataFrame({
-            'Method': ['Random forest'],
-            f'Training {parameter_criterion_string}': [train_mse],
-            'Training R2': [train_r2],
-            f'Test {parameter_criterion_string}': [test_mse],
-            'Test R2': [test_r2]
+            'Metric': ['Train MSE', 'Train R2', 'Test MSE', 'Test R2'],
+            'Value': [train_mse, train_r2, test_mse, test_r2]
         }).round(3)
+        st.dataframe(rf_results)
 
-    st.success("Model training complete!")
-
-    # Display data info
-    st.header('Input data', divider='rainbow')
+    # Data information
+    st.markdown("### Input Data Information")
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(label="No. of samples", value=X.shape[0])
-    col2.metric(label="No. of X variables", value=X.shape[1])
-    col3.metric(label="No. of Training samples", value=X_train.shape[0])
-    col4.metric(label="No. of Test samples", value=X_test.shape[0])
+    col1.metric("No. of samples", X.shape[0])
+    col2.metric("No. of features", X.shape[1])
+    col3.metric("Training samples", X_train.shape[0])
+    col4.metric("Test samples", X_test.shape[0])
 
-    with st.expander('Initial dataset', expanded=True):
-        st.dataframe(df, height=210, use_container_width=True)
-    with st.expander('Train split', expanded=False):
+    with st.expander("Initial Dataset", expanded=True):
+        st.dataframe(df)
+
+    with st.expander("Train/Test Split"):
         train_col1, train_col2 = st.columns((3, 1))
         with train_col1:
-            st.markdown('**X**')
-            st.dataframe(X_train, height=210, hide_index=True, use_container_width=True)
+            st.subheader("Train X")
+            st.dataframe(X_train)
         with train_col2:
-            st.markdown('**y**')
-            st.dataframe(y_train, height=210, hide_index=True, use_container_width=True)
-    with st.expander('Test split', expanded=False):
+            st.subheader("Train y")
+            st.dataframe(y_train)
+
         test_col1, test_col2 = st.columns((3, 1))
         with test_col1:
-            st.markdown('**X**')
-            st.dataframe(X_test, height=210, hide_index=True, use_container_width=True)
+            st.subheader("Test X")
+            st.dataframe(X_test)
         with test_col2:
-            st.markdown('**y**')
-            st.dataframe(y_test, height=210, hide_index=True, use_container_width=True)
+            st.subheader("Test y")
+            st.dataframe(y_test)
 
-    # Zip dataset files
+    # Zipping dataset files
     df.to_csv('dataset.csv', index=False)
     X_train.to_csv('X_train.csv', index=False)
     y_train.to_csv('y_train.csv', index=False)
@@ -189,49 +193,49 @@ if df is not None:
             mime="application/octet-stream"
         )
 
-    # Display model parameters
-    st.header('Model parameters', divider='rainbow')
+    # Model parameters
+    st.markdown("### Model Parameters")
     col1, col2, col3 = st.columns(3)
-    col1.metric(label="Data split ratio (% for Training Set)", value=parameter_split_size)
-    col2.metric(label="Number of estimators (n_estimators)", value=parameter_n_estimators)
-    col3.metric(label="Max features (max_features)", value='all' if max_features is None else max_features)
+    col1.metric("Data split ratio", parameter_split_size)
+    col2.metric("Number of estimators", parameter_n_estimators)
+    col3.metric("Max features", 'all' if max_features is None else max_features)
 
-    # Display feature importance plot
+    # Feature importance plot
     importances = rf.feature_importances_
     feature_names = list(X.columns)
     forest_importances = pd.Series(importances, index=feature_names)
-    df_importance = forest_importances.reset_index().rename(columns={'index': 'feature', 0: 'value'})
+    df_importance = forest_importances.reset_index().rename(columns={'index': 'feature', 0: 'importance'})
 
     bars = alt.Chart(df_importance).mark_bar(size=40).encode(
-        x='value:Q',
+        x='importance:Q',
         y=alt.Y('feature:N', sort='-x')
-    ).properties(height=250)
+    ).properties(height=400)
 
-    col1, col2 = st.columns((2, 3))
+    col1, col2 = st.columns((1, 2))
     with col1:
-        st.header('Model performance', divider='rainbow')
-        st.dataframe(rf_results.T.reset_index().rename(columns={'index': 'Parameter', 0: 'Value'}))
+        st.markdown("### Model Performance")
+        st.dataframe(rf_results)
     with col2:
-        st.header('Feature importance', divider='rainbow')
-        st.altair_chart(bars, theme='streamlit', use_container_width=True)
+        st.markdown("### Feature Importance")
+        st.altair_chart(bars, use_container_width=True)
 
     # Prediction results
-    st.header('Prediction results', divider='rainbow')
-    df_train = pd.DataFrame({'actual': y_train, 'predicted': y_train_pred, 'class': 'train'}).reset_index(drop=True)
-    df_test = pd.DataFrame({'actual': y_test, 'predicted': y_test_pred, 'class': 'test'}).reset_index(drop=True)
-    df_prediction = pd.concat([df_train, df_test], axis=0)
+    st.markdown("### Prediction Results")
+    df_train = pd.DataFrame({'actual': y_train, 'predicted': y_train_pred, 'set': 'train'})
+    df_test = pd.DataFrame({'actual': y_test, 'predicted': y_test_pred, 'set': 'test'})
+    df_prediction = pd.concat([df_train, df_test])
 
-    col1, col2 = st.columns((2, 3))
+    scatter = alt.Chart(df_prediction).mark_circle(size=60).encode(
+        x='actual',
+        y='predicted',
+        color='set'
+    )
+
+    col1, col2 = st.columns((1, 2))
     with col1:
-        st.dataframe(df_prediction, height=320, use_container_width=True)
+        st.dataframe(df_prediction)
     with col2:
-        scatter = alt.Chart(df_prediction).mark_circle(size=60).encode(
-            x='actual',
-            y='predicted',
-            color='class'
-        )
-        st.altair_chart(scatter, theme='streamlit', use_container_width=True)
+        st.altair_chart(scatter, use_container_width=True)
 
-# Ask for CSV upload if none is detected
 else:
-    st.warning('👈 Upload a CSV file or click *"Load example data"* to get started!')
+    st.warning('👈 Upload a CSV file or check *"Load example data"* to get started!')
