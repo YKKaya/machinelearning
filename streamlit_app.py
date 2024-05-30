@@ -41,15 +41,19 @@ with st.sidebar:
 
     @st.cache_data
     def load_stock_data(ticker):
-        return yf.download(ticker, progress=False)
+        # Use try-except block to handle potential errors
+        try:
+            data = yf.download(ticker, progress=False)
+            if data.empty:
+                raise ValueError("No data found for ticker")
+            return data
+        except Exception as e:
+            st.error(f"Error fetching data for ticker {ticker}: {e}")
+            return None
 
-    try:
-        df = load_stock_data(stock_ticker)
-    except Exception as e:
-        st.error(f"Error fetching data for ticker {stock_ticker}: {e}")
-        df = None
+    df = load_stock_data(stock_ticker)
 
-    if df is not None and not df.empty:
+    if df is not None:
         st.header('2. Set Parameters')
         parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
         with st.expander('What is data split ratio?'):
