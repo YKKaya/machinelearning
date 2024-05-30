@@ -53,7 +53,10 @@ with st.sidebar:
 
     df = load_stock_data(stock_ticker)
 
-    if df is not None:
+    if df is not None and not df.empty:
+        st.header('Stock Data Preview')
+        st.dataframe(df.head())
+        
         st.header('2. Set Parameters')
         parameter_split_size = st.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
         with st.expander('What is data split ratio?'):
