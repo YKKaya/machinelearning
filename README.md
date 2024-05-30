@@ -1,4 +1,4 @@
-# 📦  Stock Performance Prediction
+# 📈  Stock Performance Prediction
 
 
 Description of the app ...
